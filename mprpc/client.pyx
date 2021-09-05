@@ -1,15 +1,16 @@
 # cython: profile=False
-# -*- coding: utf-8 -*-
-
+# cython: language_level=3
 import msgpack
 import time
+import logging
+
 from gevent import socket
 from gsocketpool.connection import Connection
 
-from mprpc.exceptions import RPCProtocolError, RPCError
-from mprpc.constants import MSGPACKRPC_REQUEST, MSGPACKRPC_RESPONSE, SOCKET_RECV_SIZE
+from .exceptions import RPCProtocolError, RPCError
+from .constants import MSGPACKRPC_REQUEST, MSGPACKRPC_RESPONSE, SOCKET_RECV_SIZE
 
-from mprpc import logger
+logger = logging.getLogger(__name__)
 
 
 cdef class RPCClient:
@@ -62,10 +63,9 @@ cdef class RPCClient:
         self._tcp_no_delay = tcp_no_delay
         self._keep_alive = keep_alive
         self._pack_params = pack_params or dict(use_bin_type=True)
-        self._unpack_encoding = unpack_encoding
         self._unpack_params = unpack_params or dict(use_list=False)
 
-        self._packer = msgpack.Packer(encoding=pack_encoding, **self._pack_params)
+        self._packer = msgpack.Packer(**self._pack_params)
 
         if not lazy:
             self.open()
@@ -132,8 +132,7 @@ cdef class RPCClient:
         cdef bytes data
         self._socket.sendall(req)
 
-        unpacker = msgpack.Unpacker(encoding=self._unpack_encoding,
-                                    **self._unpack_params)
+        unpacker = msgpack.Unpacker(**self._unpack_params)
         while True:
             data = self._socket.recv(SOCKET_RECV_SIZE)
             if not data:
