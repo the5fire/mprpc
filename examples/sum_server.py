@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from gevent.server import StreamServer
 
 from mprpc import RPCServer
